@@ -53,10 +53,6 @@ server {
         add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
     }
 
-    location /loaderio-f04f73f486683698bfd6a306c8cbb252.txt {
-        return 200 "loaderio-f04f73f486683698bfd6a306c8cbb252";
-    }
-
     location / {
         # Setup var defaults
         set $no_cache "";
