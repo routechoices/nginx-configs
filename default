@@ -1,0 +1,60 @@
+uwsgi_cache_path /var/cache/nginx levels=1:2 keys_zone=microcache:5m max_size=1000m;
+
+server {
+    server_name _;
+    
+    listen 80 default_server reuseport;
+    listen [::]:80 default_server reuseport;
+
+    if ($host = "_") {
+        return 444;
+    }
+
+    location / {
+       # Setup var defaults
+       set $no_cache "";
+       # If non GET/HEAD, don't cache & mark user as uncacheable for 1 second via cookie
+       if ($request_method !~ ^(GET|HEAD)$) {
+           set $no_cache "1";
+       }
+       if ($uri ~ ^(\/dashboard|\/admin)) {
+           set $no_cache "1";
+       }
+       # Drop no cache cookie if need be
+       # (for some reason, add_header fails if included in prior if-block)
+       if ($no_cache = "1") {
+           add_header Set-Cookie "_mcnc=1; Max-Age=2; Path=/";
+           add_header X-Microcachable "0";
+       }
+       # Bypass cache if no-cache cookie is set
+       if ($http_cookie ~* "_mcnc") {
+           set $no_cache "1";
+       }
+       # Set cache zone
+       uwsgi_cache microcache;
+       # Set cache key to include identifying components
+       uwsgi_cache_key $scheme$host$request_method$request_uri;
+       # Only cache valid HTTP 200 responses for 1 second
+       uwsgi_cache_valid 200 1s;
+       # Serve from cache if currently refreshing
+       uwsgi_cache_use_stale updating;
+       # Send appropriate headers through
+       # Set files larger than 10M to stream rather than cache
+       uwsgi_max_temp_file_size 5M;
+       # Bypass cache if flag is set
+       uwsgi_no_cache $no_cache;
+       uwsgi_cache_bypass $no_cache;
+
+       client_max_body_size    20M;
+       proxy_set_header Host   $host;
+       proxy_set_header        X-Real-IP $remote_addr;
+       proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+       uwsgi_pass              unix:///apps/routechoices-server/var/django.sock;
+       uwsgi_pass_header       Authorization;
+       uwsgi_hide_header       X-Accel-Redirect;
+       uwsgi_hide_header       X-Sendfile;
+       uwsgi_pass_header       Set-Cookie;
+       uwsgi_intercept_errors  off;
+       include                 uwsgi_params;
+    }
+}
