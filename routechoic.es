@@ -1,14 +1,13 @@
+# Actual redirect
 server {
     server_name routechoic.es;
     
-    resolver 1.1.1.1;
-
     location  ~ ^/(.+) {
-      return			301 https://www.routechoices.com/r/$1;
+      return	301 https://www.routechoices.com/$1;
     }
 
     location / {
-      return       301 https://www.routechoices.com/;
+      return	301 https://www.routechoices.com/;
     }
 
     ssl_certificate /etc/letsencrypt/live/routechoic.es/fullchain.pem; # managed by Certbot
@@ -17,13 +16,13 @@ server {
     listen [::]:443 ssl http2;
 }
 
-
+# www to domain
 server {
     server_name www.routechoic.es;
 
     if ($host = www.routechoic.es) {
-        return 301 https://routechoic.es$request_uri;
-    } # managed by Certbot
+        return	301 https://routechoic.es$request_uri;
+    }
 
     ssl_certificate /etc/letsencrypt/live/routechoic.es/fullchain.pem; # managed by Certbot
     ssl_certificate_key /etc/letsencrypt/live/routechoic.es/privkey.pem; # managed by Certbot
@@ -32,22 +31,24 @@ server {
     listen [::]:443 ssl http2;
 }
 
+# http to https
 server {
     if ($host = routechoic.es) {
         return 301 https://$host$request_uri;
-    } # managed by Certbot
+    }
 
     server_name routechoic.es;
     listen 80;
     listen [::]:80;
-    return 404; # managed by Certbot
+    return 404;
 }
 
 
+# www to domain (http)
 server {
     if ($host = www.routechoic.es) {
         return 301 https://$host$request_uri;
-    } # managed by Certbot
+    }
 
     server_name www.routechoic.es;
     listen 80;
@@ -55,8 +56,9 @@ server {
     return 404; # managed by Certbot
 }
 
+# static file server
 server {
-    server_name s.routechoic.es;
+    server_name cdn.routechoic.es;
 
     gzip on;
     gzip_vary on;
@@ -97,8 +99,6 @@ server {
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
 
-    # include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    # ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
     ssl_certificate /etc/letsencrypt/live/routechoic.es/fullchain.pem; # managed by Certbot
     ssl_certificate_key /etc/letsencrypt/live/routechoic.es/privkey.pem; # managed by Certbot
     add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
