@@ -2,6 +2,12 @@
 server {
     server_name routechoic.es;
     
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+
+    ssl_certificate         /etc/letsencrypt/live/routechoic.es/fullchain.pem;
+    ssl_certificate_key     /etc/letsencrypt/live/routechoic.es/privkey.pem;
+    
     location  ~ ^/(.+) {
       return	301 https://www.routechoices.com/$1;
     }
@@ -10,50 +16,49 @@ server {
       return	301 https://www.routechoices.com/;
     }
 
-    ssl_certificate /etc/letsencrypt/live/routechoic.es/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/routechoic.es/privkey.pem; # managed by Certbot
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
 }
 
 # www to domain
 server {
     server_name www.routechoic.es;
 
-    if ($host = www.routechoic.es) {
-        return	301 https://routechoic.es$request_uri;
-    }
-
-    ssl_certificate /etc/letsencrypt/live/routechoic.es/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/routechoic.es/privkey.pem; # managed by Certbot
+    ssl_certificate         /etc/letsencrypt/live/routechoic.es/fullchain.pem; # managed by Certbot
+    ssl_certificate_key     /etc/letsencrypt/live/routechoic.es/privkey.pem; # managed by Certbot
 
     listen 443 ssl http2;
     listen [::]:443 ssl http2;
+    
+    if ($host = www.routechoic.es) {
+        return	301 https://routechoic.es$request_uri;
+    }
 }
 
 # http to https
 server {
+    server_name routechoic.es;
+
+    listen 80;
+    listen [::]:80;
     if ($host = routechoic.es) {
         return 301 https://$host$request_uri;
     }
 
-    server_name routechoic.es;
-    listen 80;
-    listen [::]:80;
     return 404;
 }
 
 
 # www to domain (http)
 server {
+    server_name www.routechoic.es;
+
+    listen 80;
+    listen [::]:80;
+
     if ($host = www.routechoic.es) {
         return 301 https://$host$request_uri;
     }
 
-    server_name www.routechoic.es;
-    listen 80;
-    listen [::]:80;
-    return 404; # managed by Certbot
+    return 404;
 }
 
 # static file server
@@ -81,13 +86,13 @@ server {
     brotli_static on;
 
     location /  {
-        access_log off;
-        alias /apps/routechoices-server/static/;
-        expires 365d;
-        add_header Cache-Control "public, no-transform";
-        add_header 'Access-Control-Allow-Origin' *;
-        add_header 'Access-Control-Allow-Methods' 'GET';
-        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+        access_log  off;
+        alias       /apps/routechoices-server/static/;
+        expires     365d;
+        add_header  Cache-Control "public, no-transform";
+        add_header  'Access-Control-Allow-Origin' *;
+        add_header  'Access-Control-Allow-Methods' 'GET';
+        add_header  'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
     }
 
     http3 on;
@@ -99,7 +104,20 @@ server {
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
 
-    ssl_certificate /etc/letsencrypt/live/routechoic.es/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/routechoic.es/privkey.pem; # managed by Certbot
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    ssl_certificate         /etc/letsencrypt/live/routechoic.es/fullchain.pem; # managed by Certbot
+    ssl_certificate_key     /etc/letsencrypt/live/routechoic.es/privkey.pem; # managed by Certbot
+    add_header              Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+}
+
+# http to https
+server {
+    server_name cdn.routechoic.es;
+
+    listen 80;
+    listen [::]:80;
+    if ($host = routechoic.es) {
+        return 301 https://$host$request_uri;
+    }
+
+    return 404;
 }
