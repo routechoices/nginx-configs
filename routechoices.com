@@ -1,21 +1,34 @@
 server {
     server_name routechoices.com *.routechoices.com;
 
+    http3 on;
+    listen [::]:443 quic reuseport;
+    listen 443 quic reuseport;
+    listen [::]:443 ssl http2 reuseport;
+    listen 443 ssl http2 reuseport;
+    
+    add_header alt-svc 'h3=":443"; ma=86400';
+    ssl_early_data on;
+
+    ssl_certificate 	/etc/letsencrypt/live/routechoices.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
+    add_header 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    
     if ($host = routechoices.com) {
         return 301 https://www.routechoices.com$request_uri;
     }
 
-    gzip on;
-    gzip_vary on;
-    gzip_types      text/plain text/css text/xml text/javascript application/javascript application/xml application/json image/svg+xml;
-    gzip_proxied    no-cache no-store private expired auth;
-    gzip_min_length 1000;
-    gzip_comp_level 9;
+    gzip		on;
+    gzip_vary		on;
+    gzip_types      	text/plain text/css text/xml text/javascript application/javascript application/xml application/json image/svg+xml;
+    gzip_proxied	no-cache no-store private expired auth;
+    gzip_min_length 	1000;
+    gzip_comp_level 	9;
 
-    brotli on;
-    brotli_comp_level 2;
-    brotli_types   text/plain text/css text/xml text/javascript application/javascript application/xml application/json image/svg+xml;
-    brotli_static on;
+    brotli 		on;
+    brotli_comp_level 	2;
+    brotli_types   	text/plain text/css text/xml text/javascript application/javascript application/xml application/json image/svg+xml;
+    brotli_static 	on;
 
     location ^~ /.well-known/acme-challenge/ {
         default_type "text/plain";
@@ -44,13 +57,14 @@ server {
     }
 
     location /static/  {
-        access_log off;
-        alias /apps/routechoices-server/static/;
-        expires 365d;
-	add_header Cache-Control "public, no-transform";
-        add_header 'Access-Control-Allow-Origin' *;
-        add_header 'Access-Control-Allow-Methods' 'GET';
-        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+        access_log 	off;
+        alias 		/apps/routechoices-server/static/;
+        expires 	365d;
+	add_header 	Cache-Control "public, no-transform";
+        add_header 	'Access-Control-Allow-Origin' *;
+        add_header 	'Access-Control-Allow-Methods' 'GET';
+        add_header 	'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+	add_header 	X-Cache $upstream_cache_status;
     }
 
     location / {
@@ -88,9 +102,9 @@ server {
         uwsgi_no_cache $no_cache;
         uwsgi_cache_bypass $no_cache;
 
-        proxy_read_timeout 300;
-        proxy_connect_timeout 300;
-        proxy_send_timeout 300;
+        proxy_read_timeout 	300;
+        proxy_connect_timeout 	300;
+        proxy_send_timeout 	300;
 
         client_max_body_size    20M;
 
@@ -109,26 +123,16 @@ server {
         include                 uwsgi_params;
     }
     
-    location /static/scripts/ping.js {
-        access_log off;
-        alias /apps/routechoices-server/static/scripts/ping.js;
-        expires 365d;
-	add_header Cache-Control "public, no-transform";
-        add_header 'Access-Control-Allow-Origin' *;
-        add_header 'Access-Control-Allow-Methods' 'GET';
-        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
-        add_header X-Cache $upstream_cache_status;
-    }
-
     location = /api/ping {
-        proxy_pass  http://127.0.0.1:8086/api/event;
+    	# Plausible docker
+        proxy_pass		http://127.0.0.1:8086/api/event;
 
-        proxy_buffering on;
-        proxy_http_version 1.1;
+        proxy_buffering 	on;
+        proxy_http_version 	1.1;
 
-        proxy_set_header Host analytics.routechoices.com;
-        proxy_ssl_name analytics.routechoices.com;
-        proxy_ssl_server_name on;
+        proxy_set_header 	Host analytics.routechoices.com;
+        proxy_ssl_name 		analytics.routechoices.com;
+        proxy_ssl_server_name 	on;
         proxy_ssl_session_reuse off;
 
         proxy_set_header X-Real-IP         $remote_addr;
@@ -136,25 +140,15 @@ server {
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host  $host;
     }
-
-    http3 on;
-    listen [::]:443 quic reuseport;
-    listen 443 quic reuseport;
-    listen [::]:443 ssl http2 reuseport;
-    listen 443 ssl http2 reuseport;
-    
-    # -- HTTP3 --
-    add_header alt-svc 'h3=":443"; ma=86400';
-    ssl_early_data on;
-
-    # include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    # ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/routechoices.com/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem; # managed by Certbot
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
 }
 
+# http to https
 server {
+    server_name routechoices.com *.routechoices.com;
+    
+    listen [::]:80;
+    listen 80;
+    
     if ($host ~ .*\.routechoices\.com) {
         return 301 https://$host$request_uri;
     }
@@ -163,38 +157,54 @@ server {
         return 301 https://$host$request_uri;
     }
 
-    listen [::]:80;
-    listen 80;
-    server_name routechoices.com *.routechoices.com;
     return 404;
 }
 
 server {
+    server_name data.routechoices.com;
+    http3 on;
+    listen 443 quic;
+    listen [::]:443 quic;
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+
+    add_header alt-svc 'h3=":443"; ma=86400';
+    ssl_early_data on;
+
+    ssl_certificate /etc/letsencrypt/live/routechoices.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
+    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+    
     location / {
         return 404;
     }
 
     location /health {
-        client_max_body_size 10k;
-        proxy_pass http://127.0.0.1:8010;
-        proxy_set_header            X-Real-IP $remote_addr;
-        proxy_set_header            X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header            X-Forwarded-Proto 'https';
-        proxy_set_header Host       $host;
-        proxy_connect_timeout       300;
-        proxy_send_timeout          300;
-        proxy_read_timeout          300;
-        send_timeout                300;
+        # tornado app (manage.py run_sse_server)
+	proxy_pass 		http://127.0.0.1:8010;
+        client_max_body_size 	10k;
+        proxy_set_header        X-Real-IP $remote_addr;
+        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header        X-Forwarded-Proto 'https';
+        proxy_set_header Host   $host;
+        proxy_connect_timeout   300;
+        proxy_send_timeout      300;
+        proxy_read_timeout      300;
+        send_timeout            300;
     }
 
     location /sse/ {
-        proxy_http_version 1.1;
-        proxy_set_header Connection "";
-        chunked_transfer_encoding off;
-        proxy_pass http://127.0.0.1:8010;
+        # tornado app (manage.py run_sse_server)
+        proxy_pass 			http://127.0.0.1:8010;
+        proxy_http_version 		1.1;
+        proxy_set_header 		Connection "";
+        chunked_transfer_encoding 	off;
     }
+}
 
-    server_name data.routechoices.com;
+
+server {
+    server_name analytics.routechoices.com;
 
     http3 on;
     listen 443 quic;
@@ -205,22 +215,15 @@ server {
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
 
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/routechoices.com/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem; # managed by Certbot
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-}
-
-
-server {
-    server_name analytics.routechoices.com;
-
+    ssl_certificate /etc/letsencrypt/live/routechoices.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
+    
     location /images/icon/plausible_logo-973ea42fac38d21a0a8cda9cfb9231c9.png {
        root /apps/plausible/overrules/;
     }
 
     location / {
+    	# plausible analytics docker
         proxy_pass  http://127.0.0.1:8086;
         proxy_redirect off;
         proxy_set_header Host $http_host;
@@ -229,55 +232,24 @@ server {
         proxy_send_timeout 120;
         proxy_read_timeout 120;
     }
-
-    http3 on;
-    listen 443 quic;
-    listen [::]:443 quic;
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-
-    add_header alt-svc 'h3=":443"; ma=86400';
-    ssl_early_data on;
-
-    ssl_certificate /etc/letsencrypt/live/routechoices.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
-}
-
-server {
-    server_name static.routechoices.com;
-
-    location /static/  {
-        access_log off;
-        alias /apps/routechoices-server/static/;
-        expires 365d;
-        add_header Cache-Control "public, no-transform";
-        add_header 'Access-Control-Allow-Origin' *;
-        add_header 'Access-Control-Allow-Methods' 'GET';
-        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
-    }
-
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-
-    ssl_certificate /etc/letsencrypt/live/routechoices.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
 }
 
 server {
     server_name tile-proxy.routechoices.com;
+    
+    listen 443 ssl http2;
+    listen [::]:443 ssl http2;
+
+    ssl_certificate /etc/letsencrypt/live/routechoices.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
 
     location /  {
         access_log off;
+	# flask app (mapant tile proxy)
         proxy_pass http://127.0.0.1:19651;
         add_header Cache-Control "public, no-transform";
         add_header 'Access-Control-Allow-Origin' *;
         add_header 'Access-Control-Allow-Methods' 'GET';
         add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
     }
-
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-
-    ssl_certificate /etc/letsencrypt/live/routechoices.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
 }
