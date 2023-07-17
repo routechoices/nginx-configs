@@ -1,10 +1,10 @@
 uwsgi_cache_path /var/cache/nginx levels=1:2 keys_zone=microcache:5m max_size=1000m;
 
 server {
-    server_name _;
-    
     listen 80 default_server reuseport;
     listen [::]:80 default_server reuseport;
+
+    server_name _;
 
     if ($host = "_") {
         return 444;
@@ -56,5 +56,15 @@ server {
        uwsgi_pass_header       Set-Cookie;
        uwsgi_intercept_errors  off;
        include                 uwsgi_params;
+    }
+}
+
+server {
+    listen      80;
+    server_name "";
+    return      444;
+    error_page 400 = @400;
+    location @400 {
+        return 444;
     }
 }
