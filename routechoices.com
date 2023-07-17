@@ -1,18 +1,23 @@
 server {
     server_name routechoices.com *.routechoices.com;
 
-    http3 on;
+    listen [::]:443 ssl reuseport;
+    listen 443 ssl reuseport;
+
+    http2 on;
+
     listen [::]:443 quic reuseport;
     listen 443 quic reuseport;
-    listen [::]:443 ssl http2 reuseport;
-    listen 443 ssl http2 reuseport;
+    
+    http3 on;
     
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
 
-    ssl_certificate 	/etc/letsencrypt/live/routechoices.com/fullchain.pem;
+    ssl_certificate	/etc/letsencrypt/live/routechoices.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
-    add_header 		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
+
+    add_header		Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
     
     if ($host = routechoices.com) {
         return 301 https://www.routechoices.com$request_uri;
@@ -30,41 +35,47 @@ server {
     brotli_types   	text/plain text/css text/xml text/javascript application/javascript application/xml application/json image/svg+xml;
     brotli_static 	on;
 
-    location ^~ /.well-known/acme-challenge/ {
-        default_type "text/plain";
-        root /apps/letsencrypt/default/;
-    }
-
     location /internal/  {
         internal;
         alias /apps/routechoices-server/media/;
     }
 
     location  ~ ^/s3/(.*) {
-      internal;
-      chunked_transfer_encoding off;
-      proxy_http_version        1.1;
-      proxy_set_header          Connection "";
-      proxy_set_header          Authorization '';
-      proxy_hide_header         x-amz-id-2;
-      proxy_hide_header         x-amz-request-id;
-      proxy_hide_header         x-amz-meta-server-side-encryption;
-      proxy_hide_header         x-amz-server-side-encryption;
-      proxy_hide_header         Set-Cookie;
-      proxy_ignore_headers      Set-Cookie;
-      proxy_pass                http://127.0.0.1:9000/$1;
-      proxy_intercept_errors    on;
+        internal;
+        chunked_transfer_encoding off;
+        proxy_http_version        1.1;
+        proxy_set_header          Connection "";
+        proxy_set_header          Authorization '';
+        proxy_hide_header         x-amz-id-2;
+        proxy_hide_header         x-amz-request-id;
+        proxy_hide_header         x-amz-meta-server-side-encryption;
+        proxy_hide_header         x-amz-server-side-encryption;
+        proxy_hide_header         Set-Cookie;
+        proxy_ignore_headers      Set-Cookie;
+        proxy_pass                http://127.0.0.1:9000/$1;
+        proxy_intercept_errors    on;
+    }
+
+    location /favicon.ico  {
+        access_log	off;
+        alias		/apps/routechoices-server/static/favicon.ico;
+        expires		365d;
+	add_header	Cache-Control "public, no-transform";
+        add_header	'Access-Control-Allow-Origin' *;
+        add_header	'Access-Control-Allow-Methods' 'GET';
+        add_header	'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+	add_header	X-Cache $upstream_cache_status;
     }
 
     location /static/  {
-        access_log 	off;
-        alias 		/apps/routechoices-server/static/;
-        expires 	365d;
-	add_header 	Cache-Control "public, no-transform";
-        add_header 	'Access-Control-Allow-Origin' *;
-        add_header 	'Access-Control-Allow-Methods' 'GET';
-        add_header 	'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
-	add_header 	X-Cache $upstream_cache_status;
+        access_log	off;
+        alias		/apps/routechoices-server/static/;
+        expires		365d;
+	add_header	Cache-Control "public, no-transform";
+        add_header	'Access-Control-Allow-Origin' *;
+        add_header	'Access-Control-Allow-Methods' 'GET';
+        add_header	'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+	add_header	X-Cache $upstream_cache_status;
     }
 
     location / {
@@ -149,68 +160,21 @@ server {
     listen [::]:80;
     listen 80;
     
-    if ($host ~ .*\.routechoices\.com) {
-        return 301 https://$host$request_uri;
-    }
-
-    if ($host = routechoices.com) {
-        return 301 https://$host$request_uri;
-    }
-
-    return 404;
+    return 301 https://$host$request_uri;
 }
-
-server {
-    server_name data.routechoices.com;
-    http3 on;
-    listen 443 quic;
-    listen [::]:443 quic;
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
-
-    add_header alt-svc 'h3=":443"; ma=86400';
-    ssl_early_data on;
-
-    ssl_certificate /etc/letsencrypt/live/routechoices.com/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
-    add_header Strict-Transport-Security "max-age=31536000; includeSubDomains; preload" always;
-    
-    location / {
-        return 404;
-    }
-
-    location /health {
-        # tornado app (manage.py run_sse_server)
-	proxy_pass 		http://127.0.0.1:8010;
-        client_max_body_size 	10k;
-        proxy_set_header        X-Real-IP $remote_addr;
-        proxy_set_header        X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header        X-Forwarded-Proto 'https';
-        proxy_set_header Host   $host;
-        proxy_connect_timeout   300;
-        proxy_send_timeout      300;
-        proxy_read_timeout      300;
-        send_timeout            300;
-    }
-
-    location /sse/ {
-        # tornado app (manage.py run_sse_server)
-        proxy_pass 			http://127.0.0.1:8010;
-        proxy_http_version 		1.1;
-        proxy_set_header 		Connection "";
-        chunked_transfer_encoding 	off;
-    }
-}
-
 
 server {
     server_name analytics.routechoices.com;
 
-    http3 on;
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    http2 on;
+
     listen 443 quic;
     listen [::]:443 quic;
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+
+    http3 on;
 
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
@@ -236,9 +200,19 @@ server {
 
 server {
     server_name tile-proxy.routechoices.com;
-    
-    listen 443 ssl http2;
-    listen [::]:443 ssl http2;
+
+    listen 443 ssl;
+    listen [::]:443 ssl;    
+
+    http2 on;
+
+    listen 443 quic;
+    listen [::]:443 quic;
+
+    http3 on;
+
+    add_header alt-svc 'h3=":443"; ma=86400';
+    ssl_early_data on;
 
     ssl_certificate /etc/letsencrypt/live/routechoices.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
