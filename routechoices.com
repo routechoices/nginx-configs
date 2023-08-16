@@ -25,15 +25,15 @@ server {
 
     gzip		on;
     gzip_vary		on;
-    gzip_types      	text/plain text/css text/xml text/javascript application/javascript application/xml application/json image/svg+xml;
+    gzip_types		text/plain text/css text/xml text/javascript application/javascript application/xml application/json image/svg+xml;
     gzip_proxied	no-cache no-store private expired auth;
-    gzip_min_length 	1000;
-    gzip_comp_level 	9;
+    gzip_min_length	1000;
+    gzip_comp_level	9;
 
-    brotli 		on;
-    brotli_comp_level 	2;
-    brotli_types   	text/plain text/css text/xml text/javascript application/javascript application/xml application/json image/svg+xml;
-    brotli_static 	on;
+    brotli		on;
+    brotli_comp_level	2;
+    brotli_types	text/plain text/css text/xml text/javascript application/javascript application/xml application/json image/svg+xml;
+    brotli_static	on;
 
     location /internal/  {
         internal;
@@ -53,18 +53,8 @@ server {
         proxy_hide_header         Set-Cookie;
         proxy_ignore_headers      Set-Cookie;
         proxy_pass                http://127.0.0.1:9000/$1;
+        proxy_hide_header	  Content-Type;
         proxy_intercept_errors    on;
-    }
-
-    location /favicon.ico  {
-        access_log	off;
-        alias		/apps/routechoices-server/static/favicon.ico;
-        expires		365d;
-	add_header	Cache-Control "public, no-transform";
-        add_header	'Access-Control-Allow-Origin' *;
-        add_header	'Access-Control-Allow-Methods' 'GET';
-        add_header	'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
-	add_header	X-Cache $upstream_cache_status;
     }
 
     location /static/  {
@@ -113,9 +103,9 @@ server {
         uwsgi_no_cache $no_cache;
         uwsgi_cache_bypass $no_cache;
 
-        proxy_read_timeout 	300;
-        proxy_connect_timeout 	300;
-        proxy_send_timeout 	300;
+        proxy_read_timeout	300;
+        proxy_connect_timeout	300;
+        proxy_send_timeout	300;
 
         client_max_body_size    20M;
 
@@ -138,12 +128,12 @@ server {
     	# Plausible docker
         proxy_pass		http://127.0.0.1:8086/api/event;
 
-        proxy_buffering 	on;
-        proxy_http_version 	1.1;
+        proxy_buffering		on;
+        proxy_http_version	1.1;
 
-        proxy_set_header 	Host analytics.routechoices.com;
-        proxy_ssl_name 		analytics.routechoices.com;
-        proxy_ssl_server_name 	on;
+        proxy_set_header	Host analytics.routechoices.com;
+        proxy_ssl_name		analytics.routechoices.com;
+        proxy_ssl_server_name	on;
         proxy_ssl_session_reuse off;
 
         proxy_set_header X-Real-IP         $remote_addr;
@@ -179,7 +169,7 @@ server {
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
 
-    ssl_certificate /etc/letsencrypt/live/routechoices.com/fullchain.pem;
+    ssl_certificate	/etc/letsencrypt/live/routechoices.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
     
     location /images/icon/plausible_logo-973ea42fac38d21a0a8cda9cfb9231c9.png {
@@ -188,13 +178,13 @@ server {
 
     location / {
     	# plausible analytics docker
-        proxy_pass  http://127.0.0.1:8086;
-        proxy_redirect off;
-        proxy_set_header Host $http_host;
-        proxy_set_header X-Forwarded-For $remote_addr;
-        proxy_connect_timeout 1;
-        proxy_send_timeout 120;
-        proxy_read_timeout 120;
+        proxy_pass		http://127.0.0.1:8086;
+        proxy_redirect		off;
+        proxy_set_header Host	$http_host;
+        proxy_set_header	X-Forwarded-For $remote_addr;
+        proxy_connect_timeout	1;
+        proxy_send_timeout	120;
+        proxy_read_timeout	120;
     }
 }
 
@@ -214,16 +204,16 @@ server {
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
 
-    ssl_certificate /etc/letsencrypt/live/routechoices.com/fullchain.pem;
+    ssl_certificate	/etc/letsencrypt/live/routechoices.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
 
     location /  {
         access_log off;
 	# flask app (mapant tile proxy)
-        proxy_pass http://127.0.0.1:19651;
-        add_header Cache-Control "public, no-transform";
-        add_header 'Access-Control-Allow-Origin' *;
-        add_header 'Access-Control-Allow-Methods' 'GET';
-        add_header 'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+        proxy_pass	http://127.0.0.1:19651;
+        add_header	Cache-Control "public, no-transform";
+        add_header	'Access-Control-Allow-Origin' *;
+        add_header	'Access-Control-Allow-Methods' 'GET';
+        add_header	'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
     }
 }
