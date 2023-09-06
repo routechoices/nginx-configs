@@ -217,3 +217,66 @@ server {
         add_header	'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
     }
 }
+
+server {
+    server_name map-download.routechoices.com;
+
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    http2 on;
+
+    listen 443 quic;
+    listen [::]:443 quic;
+
+    http3 on;
+
+    add_header alt-svc 'h3=":443"; ma=86400';
+    ssl_early_data on;
+
+    ssl_certificate	/etc/letsencrypt/live/routechoices.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
+
+    client_max_body_size 20M;
+
+    location /  {
+        access_log off;
+	# flask app (mapant tile proxy)
+        proxy_pass	http://127.0.0.1:3526;
+        add_header	Cache-Control "public, no-transform";
+        add_header	'Access-Control-Allow-Origin' *;
+        add_header	'Access-Control-Allow-Methods' 'GET';
+        add_header	'Access-Control-Allow-Headers' 'DNT,X-CustomHeader,Keep-Alive,User-Agent,X-Requested-With,If-Modified-Since,Cache-Control,Content-Type';
+    }
+}
+
+server {
+    server_name livelox-map.routechoices.com routegadget-map.routechoices.com ocad-map.routechoices.com;
+
+    listen 443 ssl;
+    listen [::]:443 ssl;
+
+    http2 on;
+
+    listen 443 quic;
+    listen [::]:443 quic;
+
+    http3 on;
+
+    add_header alt-svc 'h3=":443"; ma=86400';
+    ssl_early_data on;
+
+    ssl_certificate	/etc/letsencrypt/live/routechoices.com/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
+
+
+    if ($host = livelox-map.routechoices.com) {
+        return 301 https://map-download.routechoices.com/livelox/;
+    }
+    if ($host = ocad-map.routechoices.com) {
+        return 301 https://map-download.routechoices.com/ocad/;
+    }
+    if ($host = routegadget-map.routechoices.com) {
+        return 301 https://map-download.routechoices.com/routegadget/;
+    }
+}
