@@ -126,7 +126,8 @@ server {
     
     location = /api/ping {
     	# Plausible docker
-        proxy_pass		http://127.0.0.1:8086/api/event;
+        resolver 		1.1.1.1;
+        proxy_pass		https://analytics.routechoices.com/api/event;
 
         proxy_buffering		on;
         proxy_http_version	1.1;
