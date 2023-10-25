@@ -137,7 +137,6 @@ server {
         proxy_ssl_server_name	on;
         proxy_ssl_session_reuse off;
 
-        proxy_set_header X-Real-IP         $remote_addr;
         proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host  $host;
@@ -182,7 +181,9 @@ server {
         proxy_pass		http://127.0.0.1:8086;
         proxy_redirect		off;
         proxy_set_header Host	$http_host;
-        proxy_set_header	X-Forwarded-For $remote_addr;
+        proxy_set_header X-Forwarded-For   $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host  $host;
         proxy_connect_timeout	1;
         proxy_send_timeout	120;
         proxy_read_timeout	120;
