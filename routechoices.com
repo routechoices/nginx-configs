@@ -35,6 +35,10 @@ server {
     brotli_types	text/plain text/css text/xml text/javascript application/javascript application/xml application/json image/svg+xml;
     brotli_static	on;
 
+    if ($bad_referer) {
+          return 444;
+    }
+
     location /internal/  {
         internal;
         alias /apps/routechoices-server/media/;
@@ -150,6 +154,10 @@ server {
     listen [::]:80;
     listen 80;
     
+    if ($bad_referer) {
+          return 444;
+    }
+
     return 301 https://$host$request_uri;
 }
 
@@ -172,6 +180,10 @@ server {
     ssl_certificate	/etc/letsencrypt/live/routechoices.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
     
+    if ($bad_referer) {
+          return 444;
+    }
+
     location /images/icon/plausible_logo-973ea42fac38d21a0a8cda9cfb9231c9.png {
        root /apps/plausible/overrules/;
     }
@@ -209,6 +221,10 @@ server {
     ssl_certificate	/etc/letsencrypt/live/routechoices.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
 
+    if ($bad_referer) {
+          return 444;
+    }
+
     location /  {
         access_log off;
 	# flask app (mapant tile proxy)
@@ -241,6 +257,10 @@ server {
 
     client_max_body_size 20M;
 
+    if ($bad_referer) {
+          return 444;
+    }
+
     location /  {
         access_log off;
 	# flask app (mapant tile proxy)
@@ -271,6 +291,9 @@ server {
     ssl_certificate	/etc/letsencrypt/live/routechoices.com/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/routechoices.com/privkey.pem;
 
+    if ($bad_referer) {
+          return 444;
+    }
 
     if ($host = livelox-map.routechoices.com) {
         return 301 https://map-download.routechoices.com/livelox/;
