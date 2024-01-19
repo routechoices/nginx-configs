@@ -10,6 +10,10 @@ server {
         return 444;
     }
 
+    if ($bad_referer) {
+          return 444;
+    }
+
     location / {
        # Setup var defaults
        set $no_cache "";
