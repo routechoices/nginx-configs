@@ -5,6 +5,10 @@ server {
     listen 80;
     listen [::]:80;
 
+    if ($bad_referer) {
+          return 444;
+    }
+
     return 301 https://$host$request_uri;
 }
 
@@ -20,6 +24,10 @@ server {
     ssl_certificate         /etc/letsencrypt/live/routechoic.es/fullchain.pem;
     ssl_certificate_key     /etc/letsencrypt/live/routechoic.es/privkey.pem;
 
+    if ($bad_referer) {
+          return 444;
+    }
+
     location / {
       return	301 https://www.routechoices.com$request_uri;
     }
@@ -32,6 +40,10 @@ server {
 
     listen 80;
     listen [::]:80;
+
+    if ($bad_referer) {
+          return 444;
+    }
 
     return 301 https://$host$request_uri;
 }
@@ -76,6 +88,10 @@ server {
         font/eot font/opentype font/otf font/truetype image/svg+xml image/vnd.microsoft.icon
         image/x-icon image/x-win-bitmap text/css text/javascript text/xml;
     brotli_static on;
+
+    if ($bad_referer) {
+          return 444;
+    }
 
     location /  {
         access_log  off;
