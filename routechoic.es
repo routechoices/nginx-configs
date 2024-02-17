@@ -21,6 +21,17 @@ server {
 
     http2 on;
 
+    listen [::]:443 quic;
+    listen 443 quic;
+
+    http3 on;
+
+    quic_gso on;
+    quic_retry on;
+
+    add_header alt-svc 'h3=":443"; ma=86400';
+    ssl_early_data on;
+
     ssl_certificate         /etc/letsencrypt/live/routechoic.es/fullchain.pem;
     ssl_certificate_key     /etc/letsencrypt/live/routechoic.es/privkey.pem;
 
@@ -60,6 +71,9 @@ server {
     listen 443 quic;
 
     http3 on;
+
+    quic_gso on;
+    quic_retry on;
 
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
