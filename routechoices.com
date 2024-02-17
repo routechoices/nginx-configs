@@ -11,6 +11,9 @@ server {
     
     http3 on;
     
+    quic_gso on;
+    quic_retry on;
+
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
 
@@ -174,6 +177,9 @@ server {
 
     http3 on;
 
+    quic_gso on;
+    quic_retry on;
+
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
 
@@ -215,6 +221,9 @@ server {
 
     http3 on;
 
+    quic_gso on;
+    quic_retry on;
+
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
 
@@ -248,6 +257,9 @@ server {
     listen [::]:443 quic;
 
     http3 on;
+
+    quic_gso on;
+    quic_retry on;
 
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
@@ -284,6 +296,9 @@ server {
     listen [::]:443 quic;
 
     http3 on;
+
+    quic_gso on;
+    quic_retry on;
 
     add_header alt-svc 'h3=":443"; ma=86400';
     ssl_early_data on;
